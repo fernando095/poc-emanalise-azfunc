@@ -1,3 +1,5 @@
+using System;
+using System.Data;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -7,6 +9,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
@@ -33,13 +36,36 @@ namespace poc_emanalise_timer
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            EmAnalise emAnalise = data as EmAnalise;
-            return emAnalise != null && emAnalise.PedidoId > 0 ? new OkObjectResult(emAnalise) : new BadRequestResult();
-            //    ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-            //    : $"Hello, {JsonConvert.SerializeObject(emAnalise)}. This HTTP triggered function executed successfully.";
+            _logger.LogInformation($"Body retorno: {requestBody}.");
 
-            //return new OkObjectResult(responseMessage);
+            EmAnalise emAnalise = JsonConvert.DeserializeObject<EmAnalise>(requestBody);
+
+            var connStr = Environment.GetEnvironmentVariable("SqlConnectionString");
+            _logger.LogInformation($"Conection: {connStr}.");
+
+            if (emAnalise.PedidoId < 0)
+                return new BadRequestResult();
+            int qtdAtt;
+
+            using (SqlConnection conn = new(connStr))
+            {
+                conn.Open();
+                var text = @"UPDATE [dbo].[EmAnalise] SET QtdAtualizacao = EmAnaliseAux.QtdAtualizacao
+                            FROM (
+                                SELECT ISNULL(QtdAtualizacao, 0) + 1 AS QtdAtualizacao 
+                                FROM [dbo].[EmAnalise] 
+                                WHERE PedidoId = @PedidoId) AS EmAnaliseAux
+                            WHERE PedidoId = @PedidoId";
+
+                using SqlCommand cmd = new(text, conn);
+                cmd.Parameters.AddWithValue("PedidoId", emAnalise.PedidoId);
+                qtdAtt = await cmd.ExecuteNonQueryAsync();
+                _logger.LogInformation($"{qtdAtt} linhas atualizadas");
+            }
+            return qtdAtt > 0 ? 
+                new OkObjectResult(emAnalise) :
+                new NotFoundResult();
+
         }
     }
 }

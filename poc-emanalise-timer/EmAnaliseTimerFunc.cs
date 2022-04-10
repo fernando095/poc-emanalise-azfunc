@@ -16,7 +16,7 @@ namespace poc_emanalise_timer
         static readonly HttpClient _httpClient = new();
         [FunctionName("EmAnaliseTimerFunc")]
         public async Task Run(
-            [TimerTrigger("10 * * * * *")]TimerInfo myTimer,
+            [TimerTrigger("* * * * *")] TimerInfo myTimer,
             [Sql("select PedidoId, DataCriacao from dbo.EmAnalise where DataCriacao <= GETDATE()",
                 CommandType = CommandType.Text,
                 ConnectionStringSetting = "SqlConnectionString")]
