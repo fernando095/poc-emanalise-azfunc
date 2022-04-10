@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "poc-emanalise-timer": {
+      "commandName": "Project",
+      "commandLineArgs": "--verbose"
+    }
+  }
+}
