@@ -26,7 +26,7 @@ namespace poc_emanalise_timer
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
             log.LogInformation($"Quantidade registros expirados: {itensEmAnalise.Count()}");
-            var response = await _httpClient.GetAsync("https://poc-study-funcapp.azurewebsites.net/api/EmAnaliseHttpTriggerFunc?pedido=" + itensEmAnalise.First().PedidoId);
+            var response = await _httpClient.GetAsync("EmAnaliseHttpTriggerFunc?pedido=" + itensEmAnalise.First().PedidoId);
             log.LogInformation($"Chamada com sucesso: {response.IsSuccessStatusCode}. StatusCode: {response.StatusCode}");
             string content = await response.Content.ReadAsStringAsync();
             log.LogInformation($"Retorno pedido: {content}.");

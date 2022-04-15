@@ -30,6 +30,8 @@ namespace poc_emanalise_timer
         [OpenApiOperation(operationId: "Run", tags: new[] { "final" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "text/plain", bodyType: typeof(string), Description = "The NOT FOUND response")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "The BAD REQUEST response")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req)
         {
@@ -45,6 +47,7 @@ namespace poc_emanalise_timer
 
             if (emAnalise.PedidoId < 0)
                 return new BadRequestResult();
+
             int qtdAtt;
 
             using (SqlConnection conn = new(connStr))
